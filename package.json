@@ -1,0 +1,20 @@
+{
+  "name": "ai-2d-documentary-generator",
+  "version": "1.0.0",
+  "description": "AI 2D Documentary Video Generator - Vercel Frontend with Google Colab GPU Backend",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "ai-video",
+    "documentary-generator",
+    "colab-backend",
+    "vercel",
+    "edge-tts",
+    "2d-animation"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}

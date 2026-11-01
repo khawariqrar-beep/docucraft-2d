@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuCraft 2D - AI Documentary Video Generator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E<text y=%2226%22 font-size=%2224%22>🎬</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#0b0f17] text-slate-100 min-h-screen flex flex-col font-['Outfit',sans-serif] selection:bg-indigo-600 selection:text-white">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="border-b border-slate-800/80 bg-[#0d131f]/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i data-lucide="clapperboard" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
+            DocuCraft 2D
+            <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">AI Studio</span>
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">Automated 2D Documentary Videos Powered by Free Colab GPU</p>
+        </div>
+      </div>
+
+      <!-- Header Actions: Login with Google, Colab Status & Tutorial Guide -->
+      <div class="flex items-center space-x-2.5">
+        <!-- Direct Login with Google Button in Header -->
+        <button 
+          type="button" 
+          id="headerGoogleBtn" 
+          onclick="openYouTubeLoginModal()" 
+          class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-800 text-xs font-semibold shadow-sm transition border border-slate-200"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span id="headerGoogleText">Login with Google</span>
+        </button>
+
+        <!-- Connected Channel Pill in Header (Hidden until logged in) -->
+        <div id="headerChannelPill" class="hidden items-center space-x-2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs">
+          <div id="headerChannelAvatar" class="w-5 h-5 rounded-full overflow-hidden bg-red-600/20 flex items-center justify-center text-[10px]">
+            <i data-lucide="youtube" class="w-3 h-3 text-red-500"></i>
+          </div>
+          <span id="headerChannelName" class="font-medium text-white max-w-[120px] truncate text-[11px]">Channel</span>
+          <button onclick="disconnectYouTubeChannel()" title="Switch account" class="text-slate-400 hover:text-red-400 text-[10px] ml-1">
+            <i data-lucide="log-out" class="w-3 h-3"></i>
+          </button>
+        </div>
+
+        <div id="colabStatusBadge" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse" id="statusDot"></span>
+          <span id="statusText">Checking Backend...</span>
+        </div>
+
+        <button onclick="openModal('guideModal')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition">
+          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+          <span>Colab Setup Guide (رہنمائی)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- COLAB URL INPUT BAR -->
+  <section class="border-b border-slate-800/60 bg-[#0e1422] py-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-900/80 p-2.5 sm:p-3 rounded-xl border border-slate-800">
+        
+        <div class="flex items-center gap-2 text-xs text-slate-300 w-full md:w-auto">
+          <div class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <i data-lucide="cloud-lightning" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <span class="font-semibold text-slate-200">Google Colab Backend URL:</span>
+            <span class="text-slate-400 hidden sm:inline text-[11px] ml-1">(Paste the `trycloudflare.com` URL generated in Colab)</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto flex-1 max-w-xl">
+          <div class="relative flex-1">
+            <input 
+              type="url" 
+              id="colabUrlInput" 
+              placeholder="https://xxxxx-xxxxx.trycloudflare.com" 
+              class="w-full bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition font-mono"
+            />
+            <button 
+              onclick="pasteColabUrl()" 
+              title="Paste from clipboard"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs p-1"
+            >
+              <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <button 
+            id="connectBtn" 
+            onclick="testBackendConnection()" 
+            class="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <i data-lucide="link" class="w-3.5 h-3.5"></i>
+            <span>Connect & Test</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN STUDIO WORKSPACE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: SCRIPT & STUDIO CONTROLS (7 Cols) -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- SCRIPT CARD -->
+        <div class="bg-[#111726] border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4 text-indigo-400"></i>
+              <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Documentary Script (اسکرپٹ)</h2>
+            </div>
+            
+            <!-- Quick Preset Scripts -->
+            <div class="relative">
+              <select id="presetSelector" onchange="loadPresetScript()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value="">⚡ Load Sample Script...</option>
+                <option value="urdu_bermuda">🇵🇰 برمودا تکون کا پراسرار راز (Urdu)</option>
+                <option value="urdu_history">🇵🇰 موہنجو دڑو کی گمشدہ دنیا (Urdu)</option>
+                <option value="en_deep_sea">🇬🇧 Secrets of the Mariana Trench (English)</option>
+                <option value="en_ai_future">🇬🇧 The Rise of Autonomous AI (English)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Textarea for Script -->
+          <div class="relative">
+            <textarea 
+              id="scriptInput" 
+              rows="6" 
+              placeholder="Enter your documentary script in Urdu or English here...&#10;&#10;Example (Urdu): برمودا تکون بحر اوقیانوس کا وہ پراسرار مقام ہے جہاں درجنوں بحری اور ہوائی جہاز بغیر کسی نام و نشان کے غائب ہو چکے ہیں۔ سائنسدانوں کے مطابق طاقتور سمندری طوفان اور میتھین گیس کے بادل اس تباہی کی ممکنہ وجہ ہو سکتے ہیں۔&#10;&#10;Example (English): For decades, the Bermuda Triangle has puzzled scientists and navigators alike. Entire squadrons have vanished into thin air..."
+              class="w-full bg-[#0a0e17] border border-slate-800 rounded-xl p-3.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition resize-y leading-relaxed"
+            ></textarea>
+
+            <div class="flex items-center justify-between mt-2 text-xs text-slate-500">
+              <span id="charCount">0 characters | 0 words</span>
+              <button onclick="clearScript()" class="hover:text-red-400 transition text-[11px] flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3 h-3"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUCTION CONFIGURATION SETTINGS -->
+        <div class="bg-[#111726] border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+            <i data-lucide="sliders" class="w-4 h-4 text-violet-400"></i>
+            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Voice & Visual Style Settings</h2>
+          </div>
+
+          <!-- GRID FOR CONTROLS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- Visual Media Selection (Pictures vs Videos) -->
+            <div class="sm:col-span-2 bg-[#0a0e17] p-3 rounded-xl border border-slate-800">
+              <label class="block text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                  <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+                  <span>Visual Media Type (منظر کی قسم: تصاویر یا ویڈیوز)</span>
+                </span>
+                <span class="text-[11px] text-indigo-400 font-normal">Pure AI Generative Media (Zero Stock Footage)</span>
+              </label>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="flex items-start gap-3 p-2.5 rounded-xl border border-indigo-500/50 bg-indigo-950/20 cursor-pointer hover:border-indigo-400 transition" id="mediaOptPictures">
+                  <input type="radio" name="mediaType" value="pictures" checked onchange="updateMediaSelection()" class="mt-0.5 text-indigo-600 focus:ring-0">
+                  <div>
+                    <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                      <i data-lucide="image" class="w-3.5 h-3.5 text-pink-400"></i>
+                      <span>Pure AI Art & Handheld Motion</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Original GPU-generated AI artwork with cinematic handheld drift, organic pans & 35mm film grain.</p>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-3 p-2.5 rounded-xl border border-slate-800 bg-[#0e1422] cursor-pointer hover:border-indigo-500/50 transition" id="mediaOptVideos">
+                  <input type="radio" name="mediaType" value="videos" onchange="updateMediaSelection()" class="mt-0.5 text-indigo-600 focus:ring-0">
+                  <div>
+                    <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                      <i data-lucide="film" class="w-3.5 h-3.5 text-cyan-400"></i>
+                      <span>AI Animated Video (100% Pure AI)</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Dynamic multi-axis animated motion sequences with camera sweeps, living textures & zero stock footage.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Voice Selection -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
+                <i data-lucide="mic" class="w-3.5 h-3.5 text-pink-400"></i>
+                <span>Documentary Narrator Voice</span>
+              </label>
+              <select id="voiceSelect" class="w-full bg-[#0a0e17] border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <optgroup label="🇵🇰 Urdu Neural Voices (Pakistan)">
+                  <option value="ur-male" selected>Asad (Urdu Male - Deep Narrator)</option>
+                  <option value="ur-female">Uzma (Urdu Female - Documentary)</option>
+                  <option value="ur-male-in">Salman (Urdu Male - Neutral)</option>
+                  <option value="ur-female-in">Gul (Urdu Female - Clear)</option>
+                </optgroup>
+                <optgroup label="🇺🇸 / 🇬🇧 English Neural Voices">
+                  <option value="en-doc-male">Christopher (US Male - Deep Movie Narrator)</option>
+                  <option value="en-bbc-male">Ryan (UK Male - BBC Documentary Style)</option>
+                  <option value="en-us-female">Jenny (US Female - Crisp & Clear)</option>
+                  <option value="en-us-guy">Guy (US Male - Modern Explainer)</option>
+                </optgroup>
+                <optgroup label="🇮🇳 Hindi Neural Voices">
+                  <option value="hi-male">Madhur (Hindi Male)</option>
+                  <option value="hi-female">Swara (Hindi Female)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Visual Art Style -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
+                <i data-lucide="palette" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>Documentary Visual Style</span>
+              </label>
+              <select id="styleSelect" class="w-full bg-[#0a0e17] border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="historical" selected>🏛️ Historical Archive (Sepia & Vintage Grain)</option>
+                <option value="crime">🔍 Crime & Mystery (Dark Film Noir & Shadows)</option>
+                <option value="science">🌌 Cosmic & Science (Deep Space & Hi-Tech)</option>
+                <option value="vector2d">🎨 2D Vector Illustration (Vox / Flat Design)</option>
+                <option value="cinematic">🎬 Photorealistic Cinematic (35mm Film Lens)</option>
+              </select>
+            </div>
+
+            <!-- Aspect Ratio -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
+                <i data-lucide="aspect-ratio" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>Video Format / Aspect Ratio</span>
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-[#0a0e17] cursor-pointer hover:border-indigo-500/50 transition">
+                  <input type="radio" name="aspectRatio" value="16:9" checked class="text-indigo-600 focus:ring-0">
+                  <span class="text-xs text-slate-300 font-medium">16:9 (YouTube)</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-800 bg-[#0a0e17] cursor-pointer hover:border-indigo-500/50 transition">
+                  <input type="radio" name="aspectRatio" value="9:16" class="text-indigo-600 focus:ring-0">
+                  <span class="text-xs text-slate-300 font-medium">9:16 (Shorts/Reels)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Background Music -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
+                <i data-lucide="music" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Background Ambient Score</span>
+              </label>
+              <select id="bgMusicSelect" class="w-full bg-[#0a0e17] border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="suspense" selected>🎻 Dramatic Suspense (Low Strings Drone)</option>
+                <option value="ambient">🌌 Cosmic Ambient (Ethereal Waves)</option>
+                <option value="inspirational">🎺 Inspirational Documentary</option>
+                <option value="none">🔇 Voiceover Only (No Music)</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- TOGGLE SWITCHES -->
+          <div class="pt-3 border-t border-slate-800/80 flex flex-wrap gap-4 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+              <input type="checkbox" id="kenBurnsCheck" checked class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0 w-4 h-4">
+              <span>Dynamic Camera Motion (Handheld Drift & Sweeps)</span>
+            </label>
+
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+              <input type="checkbox" id="subtitlesCheck" checked class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0 w-4 h-4">
+              <span>Animated Word-by-Word Subtitles (Karaoke Gold Highlight)</span>
+            </label>
+          </div>
+
+          <!-- YOUTUBE AUTO-UPLOAD CONFIGURATION -->
+          <div class="pt-3 border-t border-slate-800/80">
+            <div class="p-3.5 rounded-xl border border-red-500/30 bg-red-950/15 space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input type="checkbox" id="ytUploadCheck" onchange="toggleYouTubePanel()" class="rounded border-red-500/50 bg-slate-900 text-red-600 focus:ring-0 w-4 h-4">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
+                    <span class="text-xs font-bold text-white">Direct YouTube Upload (ڈاؤنلوڈ کیے بغیر یوٹیوب پر اپلوڈ)</span>
+                  </div>
+                </label>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-red-950/60 border border-red-500/30 text-red-300">
+                  Auto API
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Download karne ki zaroorat nahi! Video bante hi Colab ke super-fast server se seedha aapke YouTube channel par upload ho jayegi.
+              </p>
+
+              <!-- Collapsible YouTube Options -->
+              <div id="ytConfigPanel" class="hidden space-y-3 pt-2 border-t border-red-500/20 text-xs">
+                <!-- Channel Connection Status Card -->
+                <div id="ytChannelCard" class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-3 shadow-sm">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div id="ytChannelAvatar" class="w-9 h-9 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0 overflow-hidden">
+                      <i data-lucide="youtube" class="w-5 h-5 text-red-500"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div id="ytChannelTitle" class="font-bold text-white text-[12px] truncate">No Personal Channel Connected</div>
+                      <div id="ytChannelSub" class="text-[10px] text-slate-400">Default Server Channel Active</div>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex items-center gap-1.5">
+                    <button type="button" id="ytConnectBtn" onclick="openYouTubeLoginModal()" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-800 font-semibold text-xs transition flex items-center gap-2 shadow-md border border-slate-200">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                      </svg>
+                      <span>Login with Google</span>
+                    </button>
+                    <button type="button" id="ytDisconnectBtn" onclick="disconnectYouTubeChannel()" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition border border-slate-700 flex items-center gap-1">
+                      <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                      <span>Switch / Log out</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-300 mb-1">Video Title (یوٹیوب ٹائٹل - خالی چھوڑیں گے تو خود بن جائے گا)</label>
+                  <input type="text" id="ytTitleInput" placeholder="Auto-generated from script if left empty..." class="w-full bg-[#0b0f19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-red-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Privacy (پرائیویسی اسٹیٹس)</label>
+                    <select id="ytPrivacySelect" class="w-full bg-[#0b0f19] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-red-500 focus:outline-none">
+                      <option value="private" selected>Private (محفوظ - بعد میں پبلک کریں)</option>
+                      <option value="unlisted">Unlisted (صرف لنک والے دیکھ سکتے ہیں)</option>
+                      <option value="public">Public (براہ راست تمام لوگوں کے لیے لائیو)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">Tags (ٹیگز - کوما کے ساتھ)</label>
+                    <input type="text" id="ytTagsInput" placeholder="documentary, history, ai, viral" class="w-full bg-[#0b0f19] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-red-500 focus:outline-none">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GENERATE ACTION BUTTON -->
+          <div class="pt-2">
+            <button 
+              id="generateBtn" 
+              onclick="startGeneration()" 
+              class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 hover:from-indigo-500 hover:via-violet-500 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transition transform active:scale-[0.99] flex items-center justify-center gap-2"
+            >
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+              <span>Generate 2D Documentary Video</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: LIVE MONITOR & VIDEO PLAYER (5 Cols) -->
+      <div class="lg:col-span-5 space-y-5">
+        
+        <!-- DISPLAY CONTAINER: SWITCHES BETWEEN IDLE, PROGRESS & COMPLETED -->
+        <div id="rightPanel" class="bg-[#111726] border border-slate-800 rounded-2xl p-5 shadow-xl min-h-[500px] flex flex-col justify-between">
+          
+          <!-- STATE 1: IDLE / WELCOME -->
+          <div id="idleState" class="flex flex-col items-center justify-center text-center my-auto py-12 px-4 space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-2">
+              <i data-lucide="video" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-200">2D Documentary Studio Ready</h3>
+            <p class="text-xs text-slate-400 max-w-sm leading-relaxed">
+              Type or paste your documentary script on the left. Once connected to Google Colab, your video will be composed with realistic voiceover, 2D Ken Burns panning, AI imagery, and subtitles.
+            </p>
+            <div class="grid grid-cols-2 gap-2 text-left w-full max-w-xs pt-4 text-[11px] text-slate-400">
+              <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> Urdu & English AI Voices</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> 2D Motion Effects</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> Free Colab Compute</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> 1080p HD Export</div>
+            </div>
+          </div>
+
+          <!-- STATE 2: LIVE MULTI-STEP PROGRESS -->
+          <div id="progressState" class="hidden flex-col justify-between h-full space-y-6 py-4">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+                  Rendering Documentary...
+                </span>
+                <span id="progressPercent" class="text-sm font-bold text-white font-mono">0%</span>
+              </div>
+              
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                <div id="progressBar" class="bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500 h-full rounded-full w-0 transition-all duration-300"></div>
+              </div>
+              <p id="currentStepText" class="text-xs text-slate-300 mt-2 font-medium">Initializing job...</p>
+            </div>
+
+            <!-- Pipeline Visual Steps -->
+            <div class="space-y-3 bg-[#0a0e17] p-3.5 rounded-xl border border-slate-800/80 text-xs">
+              <div id="step1" class="flex items-center justify-between text-slate-500">
+                <span class="flex items-center gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> 1. Script Decomposition</span>
+                <span class="step-badge">Pending</span>
+              </div>
+              <div id="step2" class="flex items-center justify-between text-slate-500">
+                <span class="flex items-center gap-2"><i data-lucide="mic" class="w-3.5 h-3.5"></i> 2. Neural Voiceover Synthesis</span>
+                <span class="step-badge">Pending</span>
+              </div>
+              <div id="step3" class="flex items-center justify-between text-slate-500">
+                <span class="flex items-center gap-2"><i data-lucide="image" class="w-3.5 h-3.5"></i> 3. AI Scene Imagery</span>
+                <span class="step-badge">Pending</span>
+              </div>
+              <div id="step4" class="flex items-center justify-between text-slate-500">
+                <span class="flex items-center gap-2"><i data-lucide="film" class="w-3.5 h-3.5"></i> 4. 2D Ken Burns Pan/Zoom</span>
+                <span class="step-badge">Pending</span>
+              </div>
+              <div id="step5" class="flex items-center justify-between text-slate-500">
+                <span class="flex items-center gap-2"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> 5. Final Concat & Audio Mix</span>
+                <span class="step-badge">Pending</span>
+              </div>
+            </div>
+
+            <!-- Colab Logs Box -->
+            <div class="bg-black/40 border border-slate-800 rounded-lg p-3 text-[11px] font-mono text-slate-400 space-y-1">
+              <div class="text-slate-500 flex items-center justify-between">
+                <span>TERMINAL LOGS:</span>
+                <span id="elapsedTimer">00:00</span>
+              </div>
+              <div id="logTerminal" class="h-20 overflow-y-auto space-y-0.5 text-slate-300">
+                <div>> Connected to Colab worker...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATE 3: COMPLETED VIDEO PREVIEW & DOWNLOAD -->
+          <div id="completedState" class="hidden flex-col h-full space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h3 class="text-sm font-bold text-white">Documentary Ready</h3>
+              </div>
+              <span id="finalDurationBadge" class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">00:00</span>
+            </div>
+
+            <!-- Video Player -->
+            <div class="relative rounded-xl overflow-hidden bg-black border border-slate-800 shadow-2xl aspect-video flex items-center justify-center">
+              <video id="finalVideoPlayer" controls class="w-full h-full object-contain"></video>
+            </div>
+
+            <!-- YouTube Upload Success Card (Shows when uploaded directly to YouTube) -->
+            <div id="ytSuccessBanner" class="hidden p-3 rounded-xl bg-red-950/25 border border-red-500/40 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 text-red-400 font-bold">
+                  <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
+                  <span>Live on YouTube (یوٹیوب پر اپلوڈ ہو چکی ہے)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-red-500/20 text-red-300 font-semibold uppercase" id="ytPrivacyBadge">Private</span>
+              </div>
+              <div class="flex items-center gap-2 pt-0.5">
+                <a id="ytWatchBtn" href="#" target="_blank" class="flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg shadow-red-600/30">
+                  <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                  <span>Watch on YouTube 📺</span>
+                </a>
+                <button onclick="copyYouTubeLink()" title="Copy YouTube Link" class="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span id="ytCopyText">Copy Link</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <a 
+                id="downloadVideoBtn" 
+                href="#" 
+                download="documentary.mp4" 
+                class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 text-center"
+              >
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Download MP4</span>
+              </a>
+
+              <button 
+                onclick="resetToCreateNew()" 
+                class="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-1.5"
+              >
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                <span>Create Another</span>
+              </button>
+            </div>
+
+            <!-- Scene Storyboard Preview -->
+            <div class="pt-3 border-t border-slate-800/80">
+              <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Scene Storyboard</h4>
+              <div id="storyboardList" class="max-h-36 overflow-y-auto space-y-2 pr-1">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- COLAB SETUP GUIDE MODAL (URDU & ENGLISH) -->
+  <div id="guideModal" onclick="if(event.target === this) closeModal('guideModal')" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#111726] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-indigo-400"></i>
+          <h3 class="text-base font-bold text-white">Google Colab Setup Guide (مرحلہ وار رہنمائی)</h3>
+        </div>
+        <button onclick="closeModal('guideModal')" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Bilingual Instructions -->
+      <div class="space-y-4 text-xs leading-relaxed text-slate-300">
+        
+        <!-- URDU SECTION -->
+        <div class="bg-indigo-950/30 border border-indigo-500/20 p-4 rounded-xl space-y-2 text-right font-['Noto_Nastaliq_Urdu',sans-serif]">
+          <h4 class="font-bold text-indigo-300 text-sm">🇵🇰 گوگل کولیب (Google Colab) استعمال کرنے کا طریقہ:</h4>
+          <ol class="list-decimal list-inside space-y-2 text-slate-200">
+            <li>سب سے پہلے <a href="https://colab.research.google.com" target="_blank" class="text-indigo-400 underline font-sans">colab.research.google.com</a> کھولیں۔</li>
+            <li>پروجیکٹ کے فولڈر میں سے <code class="bg-slate-900 px-1 py-0.5 rounded text-indigo-300 font-sans">Documentary_AI_Backend.ipynb</code> فائل کولیب پر <strong>Upload</strong> کریں۔</li>
+            <li>کولیب میں مینیو سے <strong>Runtime -> Change runtime type</strong> میں جا کر <strong>T4 GPU</strong> منتخب کریں۔</li>
+            <li>سیل نمبر 1 اور سیل نمبر 2 چلائیں (Run کریں)۔</li>
+            <li>چند سیکنڈز بعد کولیب کے نیچے آپ کو ایک لنک ملے گا جیسے: <code class="bg-slate-900 px-1.5 py-0.5 rounded text-emerald-400 font-sans">https://xxxx.trycloudflare.com</code></li>
+            <li>اس لنک کو کاپی کر کے اوپر والے باکس میں پیسٹ کریں اور <strong>Connect</strong> کا بٹن دبائیں!</li>
+          </ol>
+        </div>
+
+        <!-- ENGLISH SECTION -->
+        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-2">
+          <h4 class="font-bold text-slate-200 text-sm">🇬🇧 Step-by-Step English Workflow:</h4>
+          <ol class="list-decimal list-inside space-y-1.5 text-slate-300">
+            <li>Visit <a href="https://colab.research.google.com" target="_blank" class="text-indigo-400 underline">colab.research.google.com</a> and upload the notebook <code class="text-indigo-300">Documentary_AI_Backend.ipynb</code>.</li>
+            <li>Ensure GPU is enabled (<span class="text-slate-200 font-medium">Runtime &gt; Change runtime type &gt; T4 GPU</span>).</li>
+            <li>Run the cells sequentially. Cloudflare Tunnel will automatically generate a free public HTTPS address.</li>
+            <li>Copy the <code class="text-emerald-400">https://*.trycloudflare.com</code> URL and paste it into the URL bar of this website.</li>
+            <li>Click <strong>Connect & Test</strong>. Once green, click <strong>Generate</strong> to render your documentary!</li>
+          </ol>
+        </div>
+
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="closeModal('guideModal')" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition">
+          I Understand (سمجھ آ گئی)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- YOUTUBE CHANNEL LOGIN MODAL (1-CLICK CONTINUE WITH GOOGLE) -->
+  <div id="ytLoginModal" onclick="if(event.target === this) closeYouTubeLoginModal()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#111726] border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Continue with Google</h3>
+            <p class="text-[11px] text-slate-400">1-Click YouTube Channel Login (No Copy-Paste)</p>
+          </div>
+        </div>
+        <button onclick="closeYouTubeLoginModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Main Action -->
+      <div class="space-y-4 text-xs text-slate-300">
+        <p class="text-[12px] text-slate-300 leading-relaxed text-center">
+          Neeche diye gaye button par click karein, Google window me apna YouTube channel select kar ke <strong>Allow</strong> karein. Login automatically complete ho jayega!
+        </p>
+
+        <!-- Big 1-Click Button -->
+        <button 
+          type="button" 
+          id="ytStartAuthBtn" 
+          onclick="continueWithGoogle()" 
+          class="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-sm transition flex items-center justify-center gap-3 shadow-lg shadow-white/10 border border-slate-200 active:scale-[0.99]"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span id="ytStartAuthBtnText">Continue with Google (چینل سلیکٹ کریں)</span>
+        </button>
+
+        <!-- Dynamic Message Box -->
+        <div id="ytAuthModalMsg" class="hidden text-xs p-3.5 rounded-xl border leading-relaxed"></div>
+
+        <div class="text-[11px] text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-1">
+          <div class="flex items-center gap-2 text-slate-200 font-semibold">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400 shrink-0"></i>
+            <span>Full Automatic Flow:</span>
+          </div>
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Link copy ya code paste karne ki bilkul zaroorat nahi hai. Google account select karte hi aapka channel automatically link ho jayega.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="closeYouTubeLoginModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition">
+          Close (Band Karein)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-900 bg-[#080c14] py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>AI 2D Documentary Video Engine &bull; Free Cloud Compute via Google Colab</div>
+      <div class="text-[11px] text-slate-600">Powered by Edge-TTS, FFmpeg, and Vercel</div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
