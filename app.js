@@ -701,8 +701,8 @@ async function continueWithGoogle() {
   if (btn) btn.disabled = true;
   if (btnText) btnText.innerText = "Opening Google Sign-in...";
 
-  // Automatically determine clean redirect URI (same window or popup return origin)
-  const currentRedirectUri = window.location.origin + window.location.pathname.replace(/\/$/, "");
+  // Automatically determine clean redirect URI (exact domain origin)
+  const currentRedirectUri = window.location.origin;
 
   try {
     const res = await fetch(`${backendUrl}/api/youtube/auth-url?session_id=${encodeURIComponent(sid)}&redirect_uri=${encodeURIComponent(currentRedirectUri)}`);
@@ -712,6 +712,10 @@ async function continueWithGoogle() {
     const data = await res.json();
     if (!data.auth_url) {
       throw new Error("No authorization URL returned from server.");
+    }
+
+    if (data.code_verifier) {
+      localStorage.setItem("docu_pending_verifier", data.code_verifier);
     }
 
     if (msg) {
@@ -784,7 +788,7 @@ async function continueWithGoogle() {
 
 async function handleAutoConnectFromCode(code) {
   const sid = localStorage.getItem("docu_pending_auth_sid") || getOrCreateSessionId();
-  const currentRedirectUri = localStorage.getItem("docu_pending_auth_redirect") || (window.location.origin + window.location.pathname.replace(/\/$/, ""));
+  const currentRedirectUri = localStorage.getItem("docu_pending_auth_redirect") || window.location.origin;
 
   openYouTubeLoginModal();
   const msg = document.getElementById("ytAuthModalMsg");
@@ -801,13 +805,16 @@ async function handleAutoConnectFromCode(code) {
   }
 
   try {
+    const verifier = localStorage.getItem("docu_pending_verifier") || "";
+
     const res = await fetch(`${backendUrl}/api/youtube/connect`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: sid,
         code: code,
-        redirect_uri: currentRedirectUri
+        redirect_uri: currentRedirectUri,
+        code_verifier: verifier
       })
     });
 
@@ -815,6 +822,8 @@ async function handleAutoConnectFromCode(code) {
     if (!res.ok) {
       throw new Error(data.detail || `Server error ${res.status}`);
     }
+
+    localStorage.removeItem("docu_pending_verifier");
 
     if (msg) {
       msg.className = "text-xs p-3.5 rounded-xl border bg-emerald-950/40 border-emerald-500/40 text-emerald-200 font-semibold";
