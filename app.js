@@ -49,16 +49,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Auto-detect Google OAuth code on redirect
   const urlParams = new URLSearchParams(window.location.search);
   const authCode = urlParams.get("code");
+  const authState = urlParams.get("state");
   if (authCode) {
     if (window.opener) {
       try {
-        window.opener.postMessage({ type: "GOOGLE_AUTH_CODE", code: authCode }, "*");
+        window.opener.postMessage({ type: "GOOGLE_AUTH_CODE", code: authCode, state: authState }, "*");
         window.close();
         return;
       } catch (e) {}
     }
     setTimeout(() => {
-      handleAutoConnectFromCode(authCode);
+      handleAutoConnectFromCode(authCode, authState);
     }, 400);
   }
 });
@@ -66,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Listen for OAuth message from popup
 window.addEventListener("message", (event) => {
   if (event.data && event.data.type === "GOOGLE_AUTH_CODE") {
-    handleAutoConnectFromCode(event.data.code);
+    handleAutoConnectFromCode(event.data.code, event.data.state);
   }
 });
 
@@ -717,6 +718,9 @@ async function continueWithGoogle() {
     if (data.code_verifier) {
       localStorage.setItem("docu_pending_verifier", data.code_verifier);
     }
+    if (data.state) {
+      localStorage.setItem("docu_pending_state", data.state);
+    }
 
     if (msg) {
       msg.className = "text-xs p-3.5 rounded-xl border bg-indigo-950/40 border-indigo-500/40 text-indigo-200 leading-relaxed";
@@ -765,11 +769,13 @@ async function continueWithGoogle() {
 
         if (popupUrl && popupUrl.includes("code=")) {
           clearInterval(authPollTimer);
-          popup.close();
+          authPollTimer = null;
+          try { popup.close(); } catch (e) {}
           const parsed = new URL(popupUrl);
           const c = parsed.searchParams.get("code");
+          const s = parsed.searchParams.get("state");
           if (c) {
-            await handleAutoConnectFromCode(c);
+            await handleAutoConnectFromCode(c, s);
           }
         }
       } catch (e) {}
@@ -786,7 +792,17 @@ async function continueWithGoogle() {
   }
 }
 
-async function handleAutoConnectFromCode(code) {
+let isYtConnecting = false;
+
+async function handleAutoConnectFromCode(code, state) {
+  if (isYtConnecting) return;
+  isYtConnecting = true;
+
+  if (authPollTimer) {
+    clearInterval(authPollTimer);
+    authPollTimer = null;
+  }
+
   const sid = localStorage.getItem("docu_pending_auth_sid") || getOrCreateSessionId();
   const currentRedirectUri = localStorage.getItem("docu_pending_auth_redirect") || window.location.origin;
 
@@ -806,6 +822,7 @@ async function handleAutoConnectFromCode(code) {
 
   try {
     const verifier = localStorage.getItem("docu_pending_verifier") || "";
+    const effectiveState = state || localStorage.getItem("docu_pending_state") || "";
 
     const res = await fetch(`${backendUrl}/api/youtube/connect`, {
       method: "POST",
@@ -814,7 +831,8 @@ async function handleAutoConnectFromCode(code) {
         session_id: sid,
         code: code,
         redirect_uri: currentRedirectUri,
-        code_verifier: verifier
+        code_verifier: verifier,
+        state: effectiveState
       })
     });
 
@@ -824,6 +842,7 @@ async function handleAutoConnectFromCode(code) {
     }
 
     localStorage.removeItem("docu_pending_verifier");
+    localStorage.removeItem("docu_pending_state");
 
     if (msg) {
       msg.className = "text-xs p-3.5 rounded-xl border bg-emerald-950/40 border-emerald-500/40 text-emerald-200 font-semibold";
@@ -848,6 +867,7 @@ async function handleAutoConnectFromCode(code) {
       msg.classList.remove("hidden");
     }
   } finally {
+    isYtConnecting = false;
     if (btn) btn.disabled = false;
     if (btnText) btnText.innerText = "Continue with Google (چینل سلیکٹ کریں)";
     if (window.lucide) lucide.createIcons();
