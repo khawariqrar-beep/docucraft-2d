@@ -220,6 +220,7 @@ async function startGeneration() {
   // YouTube Auto-Upload Settings
   const ytUpload = document.getElementById("ytUploadCheck")?.checked || false;
   const ytTitle = document.getElementById("ytTitleInput")?.value?.trim() || "";
+  const ytDesc = document.getElementById("ytDescriptionInput")?.value?.trim() || "";
   const ytPrivacy = document.getElementById("ytPrivacySelect")?.value || "private";
   const ytTags = document.getElementById("ytTagsInput")?.value?.trim() || "";
 
@@ -234,6 +235,7 @@ async function startGeneration() {
     subtitles: subtitles,
     youtube_upload: ytUpload,
     youtube_title: ytTitle,
+    youtube_description: ytDesc,
     youtube_privacy: ytPrivacy,
     youtube_tags: ytTags,
     session_id: getOrCreateSessionId()
